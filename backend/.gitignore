@@ -1,0 +1,38 @@
+# Node modules
+node_modules/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Build output
+/dist
+/build
+
+# Dependency directories
+jspm_packages/
+
+# IDE/Editor folders
+.vscode/
+.idea/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Package lock files (Optional)
+# If you're using npm or yarn, you can choose to ignore package lock files if you don't want to track them.
+# package-lock.json
+# yarn.lock
+
+# Optional: Ignore the database files (if you're using a local database for development)
+# db.sqlite
+# .env.production
