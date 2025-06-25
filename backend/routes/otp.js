@@ -83,26 +83,12 @@ router.post("/verify-otp", async (req, res) => {
       });
     }
 
-    const token = jwt.sign({ email: req.body.email }, process.env.SECRET_KEY);
-    console.log(token);
-
-    res.json({ token, message: "User Verify " });
+    res.json({ message: "Otp Verified" });
   } catch (error) {
     console.log(error);
     res
       .status(500)
       .json({ success: false, message: "Internal Server Error", error });
-  }
-});
-
-router.post("/verify-user", async (req, res) => {
-  try {
-    const token = req.body.token;
-    const decoded = jwt.verify(token, process.env.SECRET_KEY);
-    console.log(decoded);
-    res.json("User Verify");
-  } catch (error) {
-    res.status(500).json({ error, message: "invalid user" });
   }
 });
 

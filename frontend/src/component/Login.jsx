@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import "../component/Main.css";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
-import { sendOTP, verifyOTP, verifyUser } from "./ApiInstance";
+import { sendOTP, userData, verifyOTP, verifyUser } from "./ApiInstance";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -16,12 +16,18 @@ const Login = () => {
   const [stopTimer, setStopTimer] = useState(false);
   const [isExpired, setIsExpired] = useState(false);
   const [showJiggle, setShowJiggle] = useState(false);
-  const [verifyForm, setVerifyForm] = useState(false);
+  const [verifyOtpForm, setVerifyOtpForm] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(false);
 
+  const [userDataForm, setUserDataForm] = useState(false);
+  const [userInfo, setUserInfo] = useState({
+    username: "",
+    PhoneNumber: "",
+  });
+
   // handle 4 digit otp on chnage
-  const handleChange = (e, index) => {
+  const handleOtpChange = (e, index) => {
     const value = e.target.value;
     // Allow only numbers and enters only one digit
     if (!/^\d?$/.test(value)) return;
@@ -98,9 +104,9 @@ const Login = () => {
     }
   };
   // for sending otp
-  const handleSumbit = async (e) => {
+  const handleEmailSumbit = async (e) => {
     e.preventDefault();
-    if (verifyForm && resendCooldown) return;
+    if (verifyOtpForm && resendCooldown) return;
     setStopTimer(false);
     setOtpDigits(["", "", "", ""]);
     setMessage("");
@@ -120,10 +126,10 @@ const Login = () => {
       setLoading(true);
       const res = await sendOTP({ email });
       console.log(res);
-      setVerifyForm(true);
+      setVerifyOtpForm(true);
       setIsExpired(false);
       toast.success("OTP Send Successfully !");
-      if (verifyForm) {
+      if (verifyOtpForm) {
         setTimer(300);
         setResendCooldown(true);
         setTimeout(() => {
@@ -144,7 +150,7 @@ const Login = () => {
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
     const otp = otpDigits.join("");
-
+    // check if email there or not
     if (!email) {
       setMessage("Please enter your email before verifying OTP.");
       setShowJiggle(true);
@@ -156,10 +162,9 @@ const Login = () => {
       setIsVerifying(true);
       const res = await verifyOTP({ otp, email });
       console.log(res);
-      localStorage.setItem("token", res.data.token);
+      setVerifyOtpForm(false);
+      setUserDataForm(true);
       setMessage("");
-      toast.success("Login Successfully !");
-      navigate("/");
     } catch (error) {
       setMessage(error?.response?.data?.message);
       console.log(error);
@@ -180,11 +185,31 @@ const Login = () => {
     const seconds = (timeInSeconds % 60).toString().padStart(2, "0");
     return `${minutes}:${seconds}`;
   };
+  // user on change
+  const handleUserOnChnage = (e) => {
+    setUserInfo({ ...userInfo, [e.target.name]: e.target.value });
+  };
+  // on submit user data
+  const handleUserFormSubmit = async (e) => {
+    e.preventDefault();
+    console.log(userInfo);
+    try {
+      const res = await userData({ userInfo, email });
+      console.log(res);
+      setUserDataForm(false);
+      toast.success("Login Successfully !");
+      localStorage.setItem("token", res.data.token);
+      navigate("/");
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   // start timer when otp sent
   useEffect(() => {
     let interval;
 
-    if (verifyForm && timer > 0 && !stopTimer) {
+    if (verifyOtpForm && timer > 0 && !stopTimer) {
       interval = setInterval(() => {
         setTimer((prev) => prev - 1);
       }, 1000);
@@ -196,19 +221,19 @@ const Login = () => {
     }
 
     return () => clearInterval(interval);
-  }, [verifyForm, timer]);
-  // auto focus input field when its verifyForm
+  }, [verifyOtpForm, timer]);
+  // auto focus input field when its verifyOtpForm
   useEffect(() => {
-    if (verifyForm && !isExpired) {
+    if (verifyOtpForm && !isExpired) {
       const firstInput = document.querySelector(".digit");
       if (firstInput) firstInput.focus();
     }
-  }, [verifyForm, isExpired]);
+  }, [verifyOtpForm, isExpired]);
   // Verify token before redirecting to home
   useEffect(() => {
+    setFetchLoading(true);
     const token = localStorage.getItem("token");
     if (token) {
-      setFetchLoading(true);
       const verifyToken = async () => {
         try {
           await verifyUser({ token });
@@ -222,6 +247,8 @@ const Login = () => {
         }
       };
       verifyToken();
+    } else {
+      setFetchLoading(false);
     }
   }, [navigate]);
 
@@ -231,9 +258,9 @@ const Login = () => {
 
   return (
     <>
-      {verifyForm ? (
+      {verifyOtpForm ? (
+        //  verify otp form
         <div className="container">
-          <input id="signup_toggle" type="checkbox" />
           <form
             className={`form ${showJiggle ? "jiggle" : ""}`}
             onSubmit={handleVerifyOtp}
@@ -254,7 +281,7 @@ const Login = () => {
                       className={`input digit ${showJiggle ? "jiggle" : ""}`}
                       disabled={isExpired || stopTimer}
                       value={otpDigits[index]}
-                      onChange={(e) => handleChange(e, index)}
+                      onChange={(e) => handleOtpChange(e, index)}
                       onKeyDown={(e) => handleKeyDown(e, index)}
                       onPaste={(e) => handlePaste(e, index)}
                     />
@@ -280,7 +307,7 @@ const Login = () => {
                   <p
                     className="Change-Email"
                     onClick={() => {
-                      setVerifyForm(false);
+                      setVerifyOtpForm(false);
                       setOtpDigits(["", "", "", ""]);
                       setTimer(300);
                       setIsExpired(false);
@@ -301,7 +328,7 @@ const Login = () => {
                       Didn’t receive the OTP?&nbsp;
                       <span
                         className="Resend-OTP"
-                        onClick={!loading ? handleSumbit : undefined}
+                        onClick={!loading ? handleEmailSumbit : undefined}
                       >
                         Resend
                       </span>
@@ -312,12 +339,50 @@ const Login = () => {
             </div>
           </form>
         </div>
-      ) : (
+      ) : userDataForm ? (
+        //  user detail form
         <div className="container">
-          <input id="signup_toggle" type="checkbox" />
           <form
             className={`form ${showJiggle ? "jiggle" : ""}`}
-            onSubmit={handleSumbit}
+            onSubmit={handleUserFormSubmit}
+          >
+            <div className="form_front">
+              <div className="space">
+                <div className="form_details">Wellcome to chat app</div>
+                <span className="white ">
+                  Before get start please enter the field
+                </span>
+              </div>
+              <input
+                type="text"
+                className={`input ${showJiggle ? "jiggle" : ""}`}
+                placeholder="Username"
+                spellCheck="false"
+                name="username"
+                value={userInfo.username}
+                onChange={handleUserOnChnage}
+              />
+              <input
+                type="number"
+                className={`input ${showJiggle ? "jiggle" : ""}`}
+                placeholder="Phone Number"
+                spellCheck="false"
+                onChange={handleUserOnChnage}
+                name="PhoneNumber"
+                value={userInfo.PhoneNumber}
+              />
+              <button className="btn">
+                {loading ? "Submiting" : "Submit"}
+              </button>
+            </div>
+          </form>
+        </div>
+      ) : (
+        // email form
+        <div className="container">
+          <form
+            className={`form ${showJiggle ? "jiggle" : ""}`}
+            onSubmit={handleEmailSumbit}
           >
             <div className="form_front">
               <div className="space">

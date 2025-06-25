@@ -11,4 +11,6 @@ export const sendOTP = (data) => API.post("/send-otp", data);
 
 export const verifyOTP = (data) => API.post("/verify-otp", data);
 
-export const verifyUser = (data) => API.post("/verify-user", data);
+export const verifyUser = (data) => API.post("/user/verify-user", data);
+
+export const userData = (data) => API.post("/user/userdata", data);

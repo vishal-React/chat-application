@@ -5,6 +5,7 @@ import { Toaster } from "react-hot-toast";
 import Profile from "./component/Profile";
 import ProtectedRoute from "./component/ProtectedRoute";
 import { createBrowserRouter, Outlet, RouterProvider } from "react-router-dom";
+import AuthProvider from "./AuthContext";
 
 const App = () => {
   const ProtectedLayout = () => (
@@ -29,8 +30,10 @@ const App = () => {
   ]);
   return (
     <>
-      <Toaster />
-      <RouterProvider router={router} />
+      <AuthProvider>
+        <Toaster />
+        <RouterProvider router={router} />
+      </AuthProvider>
     </>
   );
 };
